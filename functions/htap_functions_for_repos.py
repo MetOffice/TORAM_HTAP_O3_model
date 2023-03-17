@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 
 """
 
@@ -27,18 +27,50 @@ HTAP_REGS = '/data/users/sturnock/HTAP_files/HTAP_Phase2_tier1NC1x1_v2.nc'
 
 #------------------------------------------------
 
-def read_model_data_base(fname,cur_scn,spec,srf_name):
+def read_model_data_base(fname,cur_scn,spec,srf_name,p_out=False):
     '''
     Read in the HTAP-I model scenario data for baseline values
     '''
     ncid = Dataset(fname,'r')
     #extract data from netcdf file
-    lats = ncid.variables['lats'][:] #extract/copy the data
-    lons = ncid.variables['lons'][:]
-    levs = ncid.variables['levels'][:]
+    if p_out:
+        # If using model output then need different variables
+        lats = ncid.variables['lat_out'][:] #extract/copy the data
+        lons = ncid.variables['lon_out'][:]
+        levs = ncid.variables['level_out'][:]
+        time = np.arange(1,13,1)#ncid.variables['time'][:]
+        srf_o3_data_in = ncid.variables[spec+'_'+srf_name+'_'+cur_scn][:] # ozone data for specific model and scenario
+        o3_3d_data_in  = ncid.variables[spec+'_3d_'+cur_scn][:]
+        srf_o3_data    = srf_o3_data_in[0,:,:,:]
+        o3_3d_data     = o3_3d_data_in[0,:,:,:,:]
+    else:
+        # If using normal 2010 base then this is fine
+        lats = ncid.variables['lats'][:] #extract/copy the data
+        lons = ncid.variables['lons'][:]
+        levs = ncid.variables['levels'][:]
+        time = ncid.variables['time'][:]
+        srf_o3_data = ncid.variables[spec+'_'+srf_name+'_'+cur_scn][:] # ozone data for specific model and scenario
+        o3_3d_data  = ncid.variables[spec+'_3d_'+cur_scn][:]  # 3d ozone data 
+    
+    #close the input NetCDF file 
+    ncid.close()
+    
+    return lats,lons,levs,time,srf_o3_data,o3_3d_data
+
+#------------------------------------------------
+
+def read_model_data_base_H1(fname,cur_scn,spec,srf_name):
+    '''
+    Read in the HTAP-I model scenario data
+    '''
+    ncid = Dataset(fname,'r')
+    #extract data from netcdf file
+    lats = ncid.variables['lat'][:] #extract/copy the data
+    lons = ncid.variables['lon'][:]
+    levs = ncid.variables['lev'][:]
     time = ncid.variables['time'][:]
-    srf_o3_data = ncid.variables[spec+'_'+srf_name+'_'+cur_scn][:] # ozone data for specific model and scenario
-    o3_3d_data  = ncid.variables[spec+'_3d_'+cur_scn][:]  # 3d ozone data 
+    srf_o3_data = ncid.variables['srf_o3_SR1'][:] # ozone data for specific model and scenario
+    o3_3d_data  = ncid.variables['vmr_o3_SR1'][:]  # 3d ozone data 
     
     #close the input NetCDF file 
     ncid.close()
@@ -67,7 +99,7 @@ def read_process_emis_data(emis_file,nyrs,nregs,years_scn):
                     ch4_base = float(line[38:45])
                     
                 if line.startswith(year):  # if the year in emission file matches the requested scenario then proceed
-                    print 'Find fractional emission change between base year and future year {}'.format(year)
+                    print( 'Find fractional emission change between base year and future year {}'.format(year))
                     # Get CH4 abundance change for this particularly year
                     ch4_fut_out[iyr] = float(line[38:45])
                 
@@ -96,7 +128,7 @@ def calc_emis_scal(emis_fract,ch4_base,ch4_fut,years_all,h1_emis,src_regs,nruns,
         emis_scal_f = np.zeros((len(years_all),nruns,len(src_regs)), dtype='f')
         emis_scal_g = np.zeros((len(years_all),nruns,len(src_regs)), dtype='f')
     
-    print 'No. of Source regions for {} = {}'.format(htap,len(src_regs))
+    print( 'No. of Source regions for {} = {}'.format(htap,len(src_regs)))
     # Calculate emission scaling factors for each year
     for (iyr,year) in enumerate(years_all):
         
@@ -193,9 +225,9 @@ def read_pro_ACCMIP_rf(fname,lats_1,lons_1):
     accmip_lats   = accmip_idl.lat
     accmip_lons   = accmip_idl.lon
     
-    print accmip_2d_rf.shape
+    print( accmip_2d_rf.shape)
     # ACCMIP lat and lons are same way as param and HTAP2 regions (+90 to -90 and 0 to 360)
-    print 'Now need to convert ACCMIP normalised RF onto same grid at HTAP param output'
+    print( 'Now need to convert ACCMIP normalised RF onto same grid at HTAP param output')
     accmip_2d_rf_1x1 = convert_conc_grid_less_ann_ACCMIP(lats_1,lons_1,accmip_2d_rf,accmip_lats,accmip_lons)
     
     return accmip_2d_rf_1x1
@@ -209,9 +241,9 @@ def convert_conc_grid_less_ann_ACCMIP(lats_1,lons_1,data,lats_mod,lons_mod):
     data_convert = np.zeros((len(lats_1),len(lons_1)))
     lon_sp = lons_mod[2] - lons_mod[1]
     lat_sp = lats_mod[1] - lats_mod[2]
-    print lat_sp,lon_sp
+    print( lat_sp,lon_sp)
     
-    print 'convert Annual Mean Data to 1x1 grid'
+    print( 'convert Annual Mean Data to 1x1 grid')
     # For each lat/lon find where existing grid point fits on 1x1 grid and use as value
     for (ilat,lat_val) in enumerate(lats_mod):
         
@@ -253,41 +285,42 @@ def calc_burd_ACCMIP(data_3d,base_3d,dp_arr,area_3d,accmip_rf_2d,nregs_H2,H2_rec
     MM_DA    = 0.02897   # kg/mol Dry Air
     DU_CONV  = 2.687e20  # to convert from molecules per m2 into Dobson Units
     
-    print data_3d.shape
+    print( data_3d.shape)
+    print( type(data_3d))
     burd = np.zeros(data_3d.shape)
     
     burd[base_3d < 1.5e-07] = data_3d[base_3d < 1.5e-07] * (MM_O3/(MM_DA * G)) * dp_arr[base_3d < 1.5e-07] * area_3d[base_3d < 1.5e-07]
     
-    print 'Calculate Global Total Column Burden'
+    print( 'Calculate Global Total Column Burden')
     # Kg
     burd_2d     = np.sum(burd,axis=1) # sum up burden over all levels
     burd_2d_ann = np.mean(burd_2d,axis=0) # leave as Kg for use in calculation below
     # TG
     burd_glo_sum     = np.sum(burd,axis=(1,2,3)) # Sum up burden over all levels, lats and lons
     burd_glo_sum_ann = np.mean(burd_glo_sum) * 1e-9 # to convert Kg to Tg
-    print 'Global annual mean Total Column burden of O3 = {:.3f} Tg'.format(burd_glo_sum_ann)
+    print( 'Global annual mean Total Column burden of O3 = {:.3f} Tg'.format(burd_glo_sum_ann))
     
     # Dobson Units (global total column burden)
     # convert O3 burden from Kg into Dobson units = Kg * ( mol-1 / ( Conv_fac (molecules m-2) * m2 * Kg ))
     glob_area = np.sum(area_3d[0,0,:,:])
     dobs_glo_sum     = burd_glo_sum * (AVC / (DU_CONV * glob_area * MM_O3))
     dobs_glo_sum_ann = np.mean(dobs_glo_sum)
-    print 'Global Total Column burden of O3 = {:.2f} Du'.format(dobs_glo_sum_ann)
+    print( 'Global Total Column burden of O3 = {:.2f} Du'.format(dobs_glo_sum_ann))
     # Calculate 2D field of O3 burden in dobson units
     dobs_2d_ann = burd_2d_ann * (AVC / (DU_CONV * area_3d[0,0,:,:]* MM_O3))
     
     # Convert from Global total column burden of Ozone into a radiative effect using 
     # 2D map of normalised multi-model mean O3 RF from ACCMIP in from Stevenson et al. 2013
-    print 'Convert 2D O3 burdens (Du) into a radiative forcing using the normlised map'
+    print( 'Convert 2D O3 burdens (Du) into a radiative forcing using the normlised map')
     rf_2d_ann = dobs_2d_ann * accmip_rf_2d
     # find out all the points that are not NaN
     nan_bol = np.isnan(rf_2d_ann)
     val_ind = np.where(nan_bol == False)
     area2d_1x1 = area_3d[0,0,:,:]
     rf_2d_ann_glo = np.average(rf_2d_ann[val_ind],weights=area2d_1x1[val_ind])*1e-3
-    print 'Global O3 Radiative Forcing = {:.5f} W m-2'.format(rf_2d_ann_glo) # convert from mW m-2 to W m-2
+    print( 'Global O3 Radiative Forcing = {:.5f} W m-2'.format(rf_2d_ann_glo)) # convert from mW m-2 to W m-2
     
-    print 'Calculate HTAP2 Regional O3 burdens and Radiative Forcings'
+    print( 'Calculate HTAP2 Regional O3 burdens and Radiative Forcings')
     ann_rf_base_htap_2 = np.zeros((len(H2_recep_regs)),dtype='f') # % regions plus global as first point
     ann_burd_base_htap_2 = np.zeros((len(H2_recep_regs)),dtype='f')
     lats_1,lons_1,htap_2_region_codes = get_HTAP_2_regions(HTAP_REGS)
@@ -343,11 +376,11 @@ def find_reg(run_name):
     scen = run_name[0:3]
     if scen == 'SR1': 
         reg_num = 0 #CH4
-        print 'Scenario {} is the Baseline and has no regional information!'.format(scen)
+        print( 'Scenario {} is the Baseline and has no regional information!'.format(scen))
     elif scen == 'SR2': 
         reg_num = 0 #CH4
         reg = 'CH4'
-        print 'For Scenario {} the region of interest is Methane'.format(scen)
+        print( 'For Scenario {} the region of interest is Methane'.format(scen))
     else:
         reg = run_name[3:]
         if reg == 'EU': reg_num = 1
@@ -355,8 +388,8 @@ def find_reg(run_name):
         if reg == 'SA': reg_num = 3
         if reg == 'EA': reg_num = 4
         if reg == 'RW': reg_num = 5
-        print reg_num
-        print 'For Scenario {} the region of interest is {}'.format(scen,reg)
+        print( reg_num)
+        print( 'For Scenario {} the region of interest is {}'.format(scen,reg))
     return scen,reg_num,reg
 
 #---------------------------------------------------
@@ -380,7 +413,7 @@ def calc_area_any(nlats,nlons,lats,lons):
         for ilon in range(nlons):
             area2d[ilat,ilon]=rad*rad*PI180*yedg*lon_sp
     
-    print 'Surface area of Earth {:.0f} km2'.format(np.sum(area2d)*1e-6)
+    print( 'Surface area of Earth {:.0f} km2'.format(np.sum(area2d)*1e-6))
         
     return area2d
 
@@ -669,7 +702,7 @@ def plot_reg_changes_all_years_comb(out_fname_pl,yrs_all,reg_means_all_yrs,h2_re
     nyrs = len(yrs_all)
     
     for ireg,reg_name in enumerate(REGS):
-        print 'plot up {}'.format(reg_name)
+        print( 'plot up {}'.format(reg_name))
         plt.subplot(4,4,ireg+1)
         
         for i,reg in enumerate(sorted(h2_regions.keys())):
@@ -694,7 +727,7 @@ def plot_reg_changes_all_years_comb(out_fname_pl,yrs_all,reg_means_all_yrs,h2_re
         if n_pnts/10 <= 5: idiv = 5
         if n_pnts/10 > 5: idiv = 10
         xpnts = (np.float(xmax) - np.float(xmin))/idiv
-        print xpnts
+        print( xpnts)
         xlab = []
         for i in range(np.int(xpnts)+1):
             if i % 2:
@@ -703,7 +736,7 @@ def plot_reg_changes_all_years_comb(out_fname_pl,yrs_all,reg_means_all_yrs,h2_re
                 pnt = np.int(xmin) + (idiv * i) 
                 pnt_str = str(pnt)
                 xlab.append(pnt_str)
-        print xlab
+        print( xlab)
         ax.xaxis.set_ticklabels(xlab)
         
         ax.yaxis.grid(b=True,which='major', color = '0.75',linestyle='--', linewidth=0.5) # use 0.75 for grey shades
@@ -718,7 +751,7 @@ def plot_reg_changes_all_years_comb(out_fname_pl,yrs_all,reg_means_all_yrs,h2_re
     #         verticalalignment='center',rotation='vertical',transform=ax.transAxes,fontsize=10)
     
     plt.savefig(out_fname_pl,bbox_inches='tight')
-    print 'Finished Regional Plots'
+    print( 'Finished Regional Plots')
     
 #---------------------------------------------------
   
@@ -780,5 +813,68 @@ def output_file_mod_H1_H2(out_fname,mod_name,emis_scn,nlevs,nlons,nlats,ntime,ny
     
     #close the file and write information
     ncdat_out.close()
-    print 'Written scaled emission files to netcdf file {}'.format(out_fname)
+    print( 'Written scaled emission files to netcdf file {}'.format(out_fname))
+    
+#---------------------------------------------------
+  
+def output_file_surf_mod_H1_H2(out_fname,mod_name,emis_scn,nlevs,nlons,nlats,ntime,nyrs,levs,lons,lats,time,years,
+                    srf_o3_dat,srf_o3_dat_tot):
+    '''
+    To make netcdf output of scaled model output for combined HTAP1 and HTAP2 output
+    '''
+    # NO REGIONS HERE OR SD HERE#
+    
+    #str_out = np.array([regions], dtype='object')
+    #ncdat_out = Dataset(out_fname, 'w', format='NETCDF4_CLASSIC')
+    ncdat_out = Dataset(out_fname, 'w')
+    #define dimensions
+    #ncdat_out.createDimension('level_out', nlevs) 
+    ncdat_out.createDimension('lat_out', nlats)
+    ncdat_out.createDimension('lon_out', nlons) 
+    ncdat_out.createDimension('mon_out', ntime)
+    #ncdat_out.createDimension('reg_out', nregs+1) 
+    ncdat_out.createDimension('years_out', nyrs)
+    
+    #create variables for output
+    mon_out = ncdat_out.createVariable('mon_out', np.float64, ('mon_out',)) 
+    years_out = ncdat_out.createVariable('years_out', np.float64, ('years_out',)) 
+    #level_out = ncdat_out.createVariable('level_out', np.float32, ('level_out',))
+    lat_out = ncdat_out.createVariable('lat_out', np.float32, ('lat_out',))
+    lon_out = ncdat_out.createVariable('lon_out', np.float32, ('lon_out',))
+    #reg_out = ncdat_out.createVariable('reg_out', 'str', ('reg_out',))
+    #o3_3d_out = ncdat_out.createVariable('o3_3d_out', np.float32, ('years_out', 'mon_out', 'level_out', 'lat_out', 'lon_out'))
+    o3_srf_out = ncdat_out.createVariable('o3_srf_out', np.float32, ('years_out', 'mon_out', 'lat_out', 'lon_out'))
+    #o3_3d_out_tot = ncdat_out.createVariable('o3_3d_out_tot', np.float32, ('years_out', 'mon_out', 'level_out', 'lat_out', 'lon_out')) # fill_value=??
+    o3_srf_out_tot = ncdat_out.createVariable('o3_srf_out_tot', np.float32, ('years_out', 'mon_out', 'lat_out', 'lon_out'))
+    
+    # Assign data to variables
+    mon_out[:] = np.arange(1,ntime+1)
+    #level_out[:] = levs
+    lat_out[:] = lats
+    lon_out[:] = lons
+    #reg_out[:] = str_out#regions
+    years_out[:] = years
+    #o3_3d_out[:,:,:,:,:] = o3_3d_dat
+    o3_srf_out[:,:,:,:] = srf_o3_dat
+    #o3_3d_out_tot[:,:,:,:,:] = o3_3d_dat_tot
+    o3_srf_out_tot[:,:,:,:] = srf_o3_dat_tot
+    
+    # Assign attributes to variables
+    mon_out.setncatts({'long_name': u"month", 'units': u"month"})
+    #level_out.setncatts({'long_name': u"model level", 'units': u"hPa"})
+    lat_out.setncatts({'long_name': u"Latitude", 'units': u"degree_north"})
+    lon_out.setncatts({'long_name': u"Longitude", 'units': u"degree_east"})
+    years_out.setncatts({'long_name': u"years", 'units': u"years"})
+    #o3_3d_out_tot.setncatts({'long_name': u"ozone 3D concentration", 'units': u"vmr"})
+    #o3_3d_out.setncatts({'long_name': u"ozone 3D concentration response", 'units': u"vmr"})
+    o3_srf_out.setncatts({'long_name': u"ozone surface concentration response", 'units': u"vmr"})
+    o3_srf_out_tot.setncatts({'long_name': u"ozone surface concentration", 'units': u"vmr"})
+    
+    # Assign Global Attributes 
+    ncdat_out.description = 'Total change in ozone concentrations from both HTAP-1 and HTAP-2 '+mod_name+' models scaled in reponse to an imposed emission change from '+emis_scn+' over multiple years'  
+    
+    #close the file and write information
+    ncdat_out.close()
+    print( 'Written scaled emission files to netcdf file {}'.format(out_fname))
+
     

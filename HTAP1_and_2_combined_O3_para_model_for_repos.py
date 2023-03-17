@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 '''
 
 New version of O3 parametric model set up to use Scaled baseline of 2010
@@ -63,6 +63,9 @@ Cleaned up and slightly edited (not technically) main python script and function
 
 #### UPDATE May 2020 #####
 Included if statements to correct combined response output files to account for a for zero CH4 change
+
+### UPDATE November 2021 ###
+Modified to work with Python 3
 
 '''
 
@@ -205,13 +208,13 @@ NREGS_H2_OUT = len(HTAP2_RECP_REGS.items()) # Number of HTAP2 receptor regions
 
 if __name__ == '__main__':
     
-    print 'Calculate {} Response to {} scenario'.format(SPEC,EMIS_SCN)
+    print( 'Calculate {} Response to {} scenario'.format(SPEC,EMIS_SCN))
     
     #-----------------------------------------------
     ##### BASELINE ######
     
     # Read in Gridded Ozone Data for Baseline Scenario
-    print 'Read in 2010 Baseline concentrations from file {}'.format(BASE_CONC_FNAME)
+    print( 'Read in 2010 Baseline concentrations from file {}'.format(BASE_CONC_FNAME))
     base_nc = BASE_FILE_PATH+BASE_CONC_FNAME
     lats,lons,levs,time,srf_o3_data_SR1,o3_3d_data_SR1_init = ht_fn.read_model_data_base(base_nc,'out_tot',SPEC,'srf')
    
@@ -232,19 +235,19 @@ if __name__ == '__main__':
         dp_3d[:,ilev,:,:] = dp[ilev]
     #print dp_3d.shape
     
-    print 'Calculate grid box areas'
+    print( 'Calculate grid box areas')
     area2d_global       = ht_fn.calc_area_any(nlats,nlons,lats,lons)
     grid_areas_mon_3d   = np.ones(o3_3d_data_SR1.shape) * area2d_global # reshape to be the same as O3 response arrays
     
-    print 'Calculate baseline Global surface O3 Conc'
+    print( 'Calculate baseline Global surface O3 Conc')
     srf_o3_data_SR1_glob = ht_fn.calc_glob_mean(srf_o3_data_SR1,area2d_global) 
-    print 'Baseline Surface global annual mean O3 conc = {:.2f} ppbv'.format(srf_o3_data_SR1_glob)
+    print( 'Baseline Surface global annual mean O3 conc = {:.2f} ppbv'.format(srf_o3_data_SR1_glob))
     
     # Load in 2d map of ACCMIP normalised O3 RF
-    print 'read in ACCMIP normalised O3 radiative forcing'
+    print( 'read in ACCMIP normalised O3 radiative forcing')
     accmip_2d_rf = ht_fn.read_pro_ACCMIP_rf(ACCMIP_FILE,lats,lons)
     
-    print 'Calculate Annual mean Total Column Burden and radiative Effect for BASE'
+    print( 'Calculate Annual mean Total Column Burden and radiative Effect for BASE')
     # only calculate column O3 burden where O3 concentrations < 150ppb (definition of tropopause)
     # base_burd (kg) = vmr * (kg / kg * m s-2) * Pa (kg m-1 s-2) * m2
     base_burd, base_burd_dob, base_rf_glob, base_burd_htap2_regs, base_rf_htap2_regs = ht_fn.calc_burd_ACCMIP(o3_3d_data_SR1,o3_3d_data_SR1,dp_3d,grid_areas_mon_3d,accmip_2d_rf,NREGS_H2_OUT,HTAP2_RECP_REGS)
@@ -265,13 +268,13 @@ if __name__ == '__main__':
     # Make a masked array again
     o3_3d_data_SR1_all_reg_ms = ma.masked_equal(o3_3d_data_SR1_all_reg, -999.0)
         
-    print '### Finished reading in 2010 base scenario of {} ###'.format(BASE_CONC_FNAME)
+    print( '### Finished reading in 2010 base scenario of {} ###'.format(BASE_CONC_FNAME))
     
     #-----------------------------------------------
     ###### FRACTIONAL EMISSION CHANGE #######
     
     # Read in Fractional Emission Change data
-    print 'Read in emissions data for {} scenario'.format(EMIS_SCN)
+    print( 'Read in emissions data for {} scenario'.format(EMIS_SCN))
     # read in emission file for a particular scenario for both HTAP1 and HTAP2 source regions 
     # (that contains the fractional emission change from future year relative to base year 2010) 
     # Read and Process emission file to look for right year and find fractional emission change for each region
@@ -284,11 +287,11 @@ if __name__ == '__main__':
     #-----------------------------------------------
     ###### CALCULATE EMISSION SCALING FACTORS #######
         
-    print 'Calculate Emission scaling factors for {} scenario across all regions and all species'.format(EMIS_SCN)
+    print( 'Calculate Emission scaling factors for {} scenario across all regions and all species'.format(EMIS_SCN))
     
     # Process scaling factors for H1 equivalent source regions
     emis_scal_f_h1, emis_scal_g_h1 = ht_fn.calc_emis_scal(emis_data_fract_h1,ch4_base_out_h1,ch4_fut_out_h1,YEARS_SCN,EMISSIONS,H1_SRC_REGIONS,NRUNS_H1,CH4_CHANGE_20_H1,A,B,LINEAR,'H1')
-    print emis_scal_f_h1[0,:]
+    print( emis_scal_f_h1[0,:])
     
     # Process scaling factors for H2 additional source regions
     emis_scal_f_h2, emis_scal_g_h2 = ht_fn.calc_emis_scal(emis_data_fract_h2,ch4_base_out_h2,ch4_fut_out_h2,YEARS_SCN,EMISSIONS,H2_SRC_REGIONS,NRUNS_H2,CH4_CHANGE_20_H1,A,B,LINEAR,'H2')
@@ -297,27 +300,27 @@ if __name__ == '__main__':
     #### HTAP1 array (year,runid)
     #### HTAP2 array stays as (year,emis ,reg (inc CH4 as first point)) so process emission factors base on regions here as separate files now
     #### All H1 scenarios in same model file. ALL H2 scenarios are different files for each perturbation
-    print '#### Finished processing Emission Scaling factors ####'
+    print( '#### Finished processing Emission Scaling factors ####')
     
     #-----------------------------------------------
     ###### APPLY EMISSION SCALING FACTORS TO MODELLED O3 FIELDS FROM HTAP #######
 
     # Apply scaling factor to original HTAP-I and HTAP2 ozone fields to generate new response fields
-    print 'Apply Emission scaling factors to Ozone Response from each HTAP scenario'
+    print( 'Apply Emission scaling factors to Ozone Response from each HTAP scenario')
     
     ###### HTAP 1 MODELS ###### 
     
     # Need to process HTAP-1 Models and Scenarios separately to HTAP2
-    print '#### First Process HTAP-1 Multi-Model Responses #####'
+    print( '#### First Process HTAP-1 Multi-Model Responses #####')
     MODEL_FNAMES_H1    =  glob.glob(MOD_FILE_PATH_H1+'*.nc')
     NMODS_H1 = len(MODEL_FNAMES_H1)
-    print 'List of HTAP-1 Models to Process'
-    print MODEL_FNAMES_H1
+    print( 'List of HTAP-1 Models to Process')
+    print( MODEL_FNAMES_H1)
 
     ################################
     
     # INITIALISE OUTPUT ARRAYS
-    print 'Initialise Output Arrays'
+    print( 'Initialise Output Arrays')
     # Initialise Scaled Output Arrays to contain data for all HTAP-I models
     o3_3d_reg_all_yrs_all_mod_H1        = np.zeros((NMODS_H1,NYRS,ntime,nlevs,nlats,nlons,NREGS_H1+1), dtype='f')
     o3_srf_reg_all_yrs_all_mod_H1       = np.zeros((NMODS_H1,NYRS,ntime,nlats,nlons,NREGS_H1+1), dtype='f')
@@ -342,7 +345,7 @@ if __name__ == '__main__':
     ################################
     
     # PROCESS HTAP1 MODELS
-    print '###### Process HTAP1 Models ######'
+    print( '###### Process HTAP1 Models ######')
     # Process each HTAP1 model file in turn for EUR, NAM, SAS and EAS response
     for (imod,mod_file) in enumerate(MODEL_FNAMES_H1):
         
@@ -353,16 +356,16 @@ if __name__ == '__main__':
         cur_mod             = '_'.join(file_txt[7:8])
         cur_mod_short_txt   = cur_mod.split('_')
         cur_mod_short       = '_'.join(cur_mod_short_txt[0:1])
-        print 'Calculate {} Response to emission scenario {} from HTAP-I model {}'.format(SPEC,EMIS_SCN,cur_mod_short)
+        print( 'Calculate {} Response to emission scenario {} from HTAP-I model {}'.format(SPEC,EMIS_SCN,cur_mod_short))
         
         ################################
         
         # Calculate changes for each future year of scenario
         for (iyr,year) in enumerate(YEARS_SCN):
-            print 'Calculate Emission changes for {}'.format(year)
+            print( 'Calculate Emission changes for {}'.format(year))
             
             # Initialise new arrays to store the output scaled Ozone responses for each model in
-            print 'Initialise Output arrays'
+            print( 'Initialise Output arrays')
             # Individual regional contribution response fields
             srf_o3_data_reg     = np.zeros((ntime,nlats,nlons,NREGS_H1+1), dtype='f') # individual regional contributions from all species and for CH4 separately
             o3_3d_data_all_reg  = np.zeros((ntime,nlevs,nlats,nlons,NREGS_H1+1), dtype='f')
@@ -378,26 +381,26 @@ if __name__ == '__main__':
             
             # loop through each HTAP1 perturbation scenario
             for (irun,run) in enumerate(H1_RUNID): #loop through each scenario of ozone changes (base - 20% reduction)
-                print 'Processing scenario {}'.format(run)
+                print( 'Processing scenario {}'.format(run))
                 cur_scen,ireg,reg = ht_fn.find_reg(run) # Find out which region to use
                 
                 # Load in surface and 3D Ozone reponse field for each scenario and for each model in order  
                 lats,lons,levs,time,srf_o3_data,o3_3d_data = ht1_fn.read_H1_model_data(mod_file,run,SRF_NAME_H1,COL_NAME_H1,SPEC)
-                print 'Read in HTAP-1 Model data for scenario {} and {}'.format(run,reg)
+                print( 'Read in HTAP-1 Model data for scenario {} and {}'.format(run,reg))
                 
                 # Test if surface ozone field is numpy array or masked array (i.e. missing values)
                 if isinstance(srf_o3_data, (np.ma.core.MaskedArray)):
-                    print 'Surface array is a masked array so create a numpy array'
+                    print( 'Surface array is a masked array so create a numpy array')
                     srf_o3_data = srf_o3_data.filled() # copy of masked array and makes numpy array with masked values filled with -999.0
                     no_rw = 1 # If surface is masked array then has missing values and need to use rest of the world to fill in
                 
                 # Test if 3D array is a numpy array as should be a masked array (EMEP model 3D files are numpy arrays)
                 if isinstance(o3_3d_data, (np.ndarray)):
-                    print '3D array is a numpy array so create a masked array'
+                    print( '3D array is a numpy array so create a masked array')
                     mask_arr    = np.isnan(o3_3d_data) # create mask of boolean values for where points are NaN
                     o3_3d_data  = ma.masked_array(o3_3d_data,mask=mask_arr)
                 
-                print 'Apply future emission Scaling factor to individual model HTAP-I O3 response for scenario {}'.format(run)
+                print( 'Apply future emission Scaling factor to individual model HTAP-I O3 response for scenario {}'.format(run))
                 # use HTAP1 O3 response to 20% emission perturbation and scale by new emission fraction
                 srf_o3_data_sing_reg,o3_3d_data_sing_reg = ht1_fn.calc_scal_data(emis_scal_f_h1[iyr,irun],emis_scal_g_h1[iyr,irun],cur_scen,ireg,cur_mod,no_rw,
                                                                                 srf_o3_data,o3_3d_data,ntime,nlevs,nlats,nlons)
@@ -411,7 +414,7 @@ if __name__ == '__main__':
             ################################    
             
             # NEED TO ADD BACK ON BASE 2010 CONCENTRATIONS TO GET NEW OZONE CONCS and not just change in Ozone (Not done above as first run should have scaling factor of zero and is ignored)                   
-            print 'Add year 2010 Parameterised baseline concentrations to get total ozone changes'
+            print( 'Add year 2010 Parameterised baseline concentrations to get total ozone changes')
             # 3D Data
             no_vals                     = np.where(o3_3d_data_SR1_all_reg_ms.mask) # find where no values in base scenario
             o3_3d_data_all_reg[no_vals] = float('nan') # Mask out grid squares where no data and replace with nan
@@ -424,7 +427,7 @@ if __name__ == '__main__':
             ############################################
             
             # Collate Individual model response for each year back into overall Master arrays 
-            print 'Collate Scaled Ozone response for {} model into master array'.format(cur_mod_short)
+            print( 'Collate Scaled Ozone response for {} model into master array'.format(cur_mod_short))
             o3_3d_reg_all_yrs_all_mod_H1[imod,iyr,:,:,:,:,:]        = o3_3d_data_all_reg[:,:,:,:,:]
             o3_srf_reg_all_yrs_all_mod_H1[imod,iyr,:,:,:,:]         = srf_o3_data_reg[:,:,:,:]
             o3_3d_reg_tot_all_yrs_all_mod_H1[imod,iyr,:,:,:,:,:]    = o3_3d_data_all_reg_tot[:,:,:,:,:]
@@ -436,7 +439,7 @@ if __name__ == '__main__':
             if IOUT_NCF_INDIVID_H1 == 1:
                 # Output Individual-model global mean values to a netcdf file 
                 out_fname = '{}_HTAP-I_model_mean_{}_response_in_{}_to_{}_change.nc'.format(cur_mod,SPEC,year,EMIS_SCN)
-                print 'Output Individual HTAP1 model {} Scaled Ozone fields to Netcdf file {}'.format(cur_mod,out_fname)
+                print( 'Output Individual HTAP1 model {} Scaled Ozone fields to Netcdf file {}'.format(cur_mod,out_fname))
                 out_fname_path = OUT_FILE_PATH+out_fname
                 ht1_fn.output_file_mod_H1(out_fname_path,cur_mod,EMIS_SCN,nlevs,nlons,nlats,ntime,NREGS_H1,levs,lons,lats,time,['CH4']+H1_SRC_REGIONS,year,
                         o3_3d_data_all_reg,srf_o3_data_reg,o3_3d_data_all_reg_tot,srf_o3_data_reg_tot)
@@ -449,12 +452,12 @@ if __name__ == '__main__':
             ######### NEED TO WAIT UNTIL ADDED TOGEHER HTAP1 AND HTAP2 CONTRIBUTIONS TO GET PROPER REGIONAL MEANS #####   
                 # For first model to process calculate global mean area
                 if imod == 0: 
-                    print 'Calculate grid box areas'
+                    print( 'Calculate grid box areas')
                     area2d_global = ht_fn.calc_area_any(nlats,nlons,lats,lons)
                                
-                print 'Calculate Annual Mean O3 response values over HTAP2 receptor regions for HTAP1 Models for emission change scenario'
+                print( 'Calculate Annual Mean O3 response values over HTAP2 receptor regions for HTAP1 Models for emission change scenario')
                 # Calc reg changes doese calculation to include number of models as well now
-                print 'Calculate Regional Changes for model {} in {}'.format(cur_mod_short,year)
+                print( 'Calculate Regional Changes for model {} in {}'.format(cur_mod_short,year))
                 
                 for (ireg_h1,reg_h1) in enumerate(['CH4']+H1_SRC_REGIONS):
                     # O3 response regional mean vlaues
@@ -465,14 +468,14 @@ if __name__ == '__main__':
                     reg_mean_vals_act_H1[imod,iyr,ireg_h1,:]= reg_mean_vals_act_yr[:]
                     
                     # CALCULATE GLOBAL MEAN VALUES
-                    print 'Calculate Global Mean Responses'
+                    print( 'Calculate Global Mean Responses')
                     global_mean_val_H1[imod,iyr,ireg_h1]    = ht_fn.calc_glob_mean(srf_o3_data_reg[:,:,:,ireg_h1],area2d_global)
                     global_mean_val_act_H1[imod,iyr,ireg_h1]= ht_fn.calc_glob_mean(srf_o3_data_reg_tot[:,:,:,ireg_h1],area2d_global)
-                    print 'Global annual mean change in response to {} emission decrease = {:.3f}'.format(reg_h1,global_mean_val_H1[imod,iyr,ireg_h1])
+                    print( 'Global annual mean change in response to {} emission decrease = {:.3f}'.format(reg_h1,global_mean_val_H1[imod,iyr,ireg_h1]))
                     
                     ############################################
                     # Calculate burden and Radiative Forcing for each H1 source region of current model
-                    print 'Calculate Annual mean Global Total Column Burden for model {}'.format(cur_mod_short)
+                    print( 'Calculate Annual mean Global Total Column Burden for model {}'.format(cur_mod_short))
                     # calculate annual mean Global Total column burden for each model to use to find Variance in HTAP1 for RF error         
                     o3_mod_burd, mod_burd_dob, mod_rf_glob, mod_burd_htap2_regs, mod_rf_htap2_regs = ht_fn.calc_burd_ACCMIP(o3_3d_data_all_reg[:,:,:,:,ireg_h1],o3_3d_data_SR1,dp_3d,grid_areas_mon_3d,accmip_2d_rf,NREGS_H2_OUT,HTAP2_RECP_REGS)
                     
@@ -483,14 +486,14 @@ if __name__ == '__main__':
                     
                     if IPRINT_REG == 1:
                         for ireg_2,values in enumerate(sorted(HTAP2_RECP_REGS)):
-                            print 'Area weighted annual mean change for HTAP 2 region {} in response to {} emission decrease = {:.3f}'.format(values,reg_h1,reg_mean_vals_H1[imod,iyr,ireg_h1,ireg_2])
-                            print 'Area weighted total annual mean concentration for HTAP 2 region {} in response to {} emission decrease = {:.2f}'.format(values,reg_h1,reg_mean_vals_act_H1[imod,iyr,ireg_h1,ireg_2])
+                            print( 'Area weighted annual mean change for HTAP 2 region {} in response to {} emission decrease = {:.3f}'.format(values,reg_h1,reg_mean_vals_H1[imod,iyr,ireg_h1,ireg_2]))
+                            print( 'Area weighted total annual mean concentration for HTAP 2 region {} in response to {} emission decrease = {:.2f}'.format(values,reg_h1,reg_mean_vals_act_H1[imod,iyr,ireg_h1,ireg_2]))
             
         #########################################
         
         if IOUT_TXT_INDIVID_H1 ==1:
             # Write out text file for inidividual model responses to an emission change
-            print 'Write out regional changes to file for HTAP1 model {}'.format(cur_mod_short)
+            print( 'Write out regional changes to file for HTAP1 model {}'.format(cur_mod_short))
             header_out          = ['Year','Emis_scn','CAM','CAS','EAS','EUR','MDE','NAF','NAM','NOP','OCN','PAN','RBU','SAF','SAM','SAS','SEA','SOP','GLO']
             header_out_str      = ','.join(header_out)
             out_fname_act_conc  = OUT_TXT_FILE_PATH+'individ_mods/'+cur_mod_short+'_H1_model_regional_average_'+SPEC+'_concentrations_to_each_emis_pert_for_'+EMIS_SCN+'_on_HTAP_2_receptors.txt'
@@ -498,16 +501,16 @@ if __name__ == '__main__':
             # Output text file of regional means
             ht_fn.output_txt_file_reg_individ_mod(out_fname_resp,header_out_str,YEARS_SCN,['CH4']+H1_SRC_REGIONS,reg_mean_vals_H1,global_mean_val_H1,imod)
             ht_fn.output_txt_file_reg_individ_mod(out_fname_act_conc,header_out_str,YEARS_SCN,['CH4']+H1_SRC_REGIONS,reg_mean_vals_act_H1,global_mean_val_act_H1,imod)
-            print '#### Finished Writing Regional Response for HTAP1 Individual Model {} ####'.format(cur_mod_short)
+            print( '#### Finished Writing Regional Response for HTAP1 Individual Model {} ####'.format(cur_mod_short))
             
     ############################################
     # Calculate multi_model mean values and also standard deviation of results for both surf, 3D and regional mean values
     #### THESE ARE MMM FOR TOTAL O3 RESPONSE TO EUR, NAM, EAS AND SAS EMISSION CHANGE (H1 MODELS)
     if IOUT_CALC_MMM_H1 == 1:
-        print 'Calculate Multi-model Mean and Standard Deviations for HTAP1 Models across Regions {}'.format(['CH4']+H1_SRC_REGIONS)
+        print( 'Calculate Multi-model Mean and Standard Deviations for HTAP1 Models across Regions {}'.format(['CH4']+H1_SRC_REGIONS))
         
-        print 'Calculate HTAP1 Multi-Model output arrays'
-        print o3_3d_reg_all_yrs_all_mod_H1.shape
+        print( 'Calculate HTAP1 Multi-Model output arrays')
+        print( o3_3d_reg_all_yrs_all_mod_H1.shape)
         o3_3d_reg_all_yrs_H1_mmm        = np.nanmean(o3_3d_reg_all_yrs_all_mod_H1, axis=0)
         o3_srf_reg_all_yrs_H1_mmm       = np.nanmean(o3_srf_reg_all_yrs_all_mod_H1, axis=0)
         o3_3d_reg_tot_all_yrs_H1_mmm    = np.nanmean(o3_3d_reg_tot_all_yrs_all_mod_H1, axis=0)
@@ -520,7 +523,7 @@ if __name__ == '__main__':
         o3_srf_reg_tot_all_yrs_H1_mmm_stdev = np.nanstd(o3_srf_reg_tot_all_yrs_all_mod_H1, axis=0)
         
         # Separate out O3 response to Methane from HTAP1 models to combined later on with those from HTAP2 models
-        print 'Separate out Methane responses for H1 model'
+        print( 'Separate out Methane responses for H1 model')
         #print np.min(o3_srf_reg_all_yrs_all_mod_H1[:,:,:,:,:,0])*1e9, np.mean(o3_srf_reg_all_yrs_all_mod_H1[:,:,:,:,:,0])*1e9, np.max(o3_srf_reg_all_yrs_all_mod_H1[:,:,:,:,:,0])*1e9
         ch4_srf_all_yrs_H1          = o3_srf_reg_all_yrs_all_mod_H1[:,:,:,:,:,0]
         ch4_3d_reg_all_yrs_H1       = o3_3d_reg_all_yrs_all_mod_H1[:,:,:,:,:,:,0]
@@ -533,7 +536,7 @@ if __name__ == '__main__':
         o3_burd_reg_H1_ch4          = reg_o3_burd_all_mod_H1[:,:,0,:]
         o3_rf_reg_H1_ch4            = reg_o3_rf_all_mod_H1[:,:,0,:]
         
-        print 'Calculate Variation in Global total column burdens between models'
+        print( 'Calculate Variation in Global total column burdens between models')
         o3_burd_all_mod_H1_mmm = np.nanmean(o3_burd_all_mod_H1,axis=0)
         o3_burd_all_mod_H1_sd  = np.nanstd(o3_burd_all_mod_H1, axis=0)
         o3_burd_all_mod_H1_var = np.nanvar(o3_burd_all_mod_H1, axis=0)
@@ -555,7 +558,7 @@ if __name__ == '__main__':
         if IOUT_NCF_MMM_H1 == 1: # Only if set for separate NetCDF file
             # Output multi-model global mean values and standard deviations to a netcdf file 
             out_fname = 'Multi_model_mean_H1_plus_stdev_for_{}_response_to_{}_change.nc'.format(SPEC,EMIS_SCN)
-            print 'Output Scaled Ozone fields to Netcdf file {}'.format(out_fname)
+            print( 'Output Scaled Ozone fields to Netcdf file {}'.format(out_fname))
             out_fname_path = OUT_FILE_PATH+out_fname
             ht1_fn.output_file_h1_mmm(out_fname_path,'Multi-model',EMIS_SCN,nlevs,nlons,nlats,ntime,NYRS,NREGS_H1,levs,lons,lats,time,['CH4']+H1_SRC_REGIONS,YEARS_SCN,
                                 #o3_3d_all_yrs_mmm,o3_srf_all_yrs_mmm,o3_3d_tot_all_yrs_mmm,o3_srf_tot_all_yrs_mmm,
@@ -563,7 +566,7 @@ if __name__ == '__main__':
                                 #o3_3d_all_yrs_mmm_stdev,o3_srf_all_yrs_mmm_stdev,o3_3d_tot_all_yrs_mmm_stdev,o3_srf_tot_all_yrs_mmm_stdev,
                                 o3_3d_reg_all_yrs_H1_mmm_stdev,o3_srf_reg_all_yrs_H1_mmm_stdev,o3_3d_reg_tot_all_yrs_H1_mmm_stdev,o3_srf_reg_tot_all_yrs_H1_mmm_stdev)
         
-        print 'Calculate Regional HTAP1 Multi-model regional changes (and standard deviations)'
+        print( 'Calculate Regional HTAP1 Multi-model regional changes (and standard deviations)')
         reg_mean_vals_mmm_H1     = np.nanmean(reg_mean_vals_H1, axis = 0)
         reg_mean_vals_act_mmm_H1 = np.nanmean(reg_mean_vals_act_H1, axis = 0)
         
@@ -580,7 +583,7 @@ if __name__ == '__main__':
     # Regional Multi-model Means
     if  IOUT_TXT_MMM_H1 == 1:
         # Output multi-model regional mean values along with standard deviation to a text file     
-        print 'Write out HTAP1 Multi-model regional changes (and standard deviations) to file'
+        print( 'Write out HTAP1 Multi-model regional changes (and standard deviations) to file')
             
         header_out              = ['Year','Emis_scn','MCA','CAS','EAS','EUR','MDE','NAF','NAM','NOP','OCN','PAN','RBU','SAF','SAM','SAS','SEA','SOP','GLO']
         header_out_str          = ','.join(header_out)
@@ -601,7 +604,7 @@ if __name__ == '__main__':
         #ht_fn.output_txt_file_burd_mmm(out_fname_o3_burd_mmm,header_out_str,['2010']+YEARS_SCN,['CH4']+H1_SRC_REGIONS,base_burd,base_rf_glob,
         #                               o3_burd_all_mod_H1_mmm,o3_burd_all_mod_H1_sd,o3_burd_all_mod_H1_var,rf_glob_all_mod_H1_mmm,rf_glob_all_mod_H1_sd,rf_glob_all_mod_H1_var)
         
-        print 'Write out to file HTAP1 multi-model change in REGIONAL Total O3 column Burden and RE'
+        print( 'Write out to file HTAP1 multi-model change in REGIONAL Total O3 column Burden and RE')
         #header_out_reg              = ['Year','Emis_scn','MCA','CAS','EAS','EUR','MDE','NAF','NAM','NOP','OCN','PAN','RBU','SAF','SAM','SAS','SEA','SOP','GLO']
         #header_out_reg_str          = ','.join(header_out_reg)
         #out_fname_reg_o3_burd_mmm   = OUT_TXT_FILE_PATH+'Multi-model_H1_GLOBAL_and_REGIONAL_ann_mean_RESPONSE_'+SPEC+'_col_burd_and_RE_for_'+EMIS_SCN+'_src_regs.txt'
@@ -620,17 +623,17 @@ if __name__ == '__main__':
         ht_fn.output_txt_file_reg_mmm(out_fname_reg_o3_rf_sd_mmm,header_out_str,YEARS_SCN,['CH4']+H1_SRC_REGIONS,reg_o3_rf_all_mod_H1_sd,rf_glob_all_mod_H1_sd)
         
         
-        print '#### Finished Writing Regional Response for HTAP1 Multi Model Mean Values ####'
+        print( '#### Finished Writing Regional Response for HTAP1 Multi Model Mean Values ####')
     
     ################################
     ################################  
     
     # PROCESS HTAP2 MODELS
     # Process HTAP-2 Scenarios and individual models (including separate one for Methane)
-    print '###### PROCESS HTAP2 MODELS FOR ADDITIONAL SCENARIOS ########'
+    print( '###### PROCESS HTAP2 MODELS FOR ADDITIONAL SCENARIOS ########')
     
     # INITIALISE OUTPUT ARRAYS
-    print 'Initialise Output Arrays to collect all data from HTAP2 models'
+    print( 'Initialise Output Arrays to collect all data from HTAP2 models')
     # Initialise Scaled Output Arrays to contain data for all HTAP-2 models
     # As these are regional scenario based then need to collate on regions before totalling up
     o3_3d_reg_all_yrs_MMM_H2        = np.zeros((NYRS,ntime,nlevs,nlats,nlons,NREGS_H2), dtype='f')
@@ -669,20 +672,20 @@ if __name__ == '__main__':
     reg_o3_rf_all_mod_H2_sd  = np.zeros((NYRS,NREGS_H2,NREGS_H2_OUT), dtype='f')
     reg_o3_rf_all_mod_H2_var = np.zeros((NYRS,NREGS_H2,NREGS_H2_OUT), dtype='f')
     
-    print H2_SCN_ID
+    print( H2_SCN_ID)
     # Process each HTAP2 model for each regional emission perturbation Scenario
     # SCENARIOS - HTAP2 regional Emission perturbation Sccenario order is 
     #['CH4ALL', 'MDEALL', 'RBUALL', 'NAFALL', 'MCAALL', 'SAMALL', 'CASALL', 'SAFALL', 'PANALL', 'SEAALL', 'OCNALL']#
     for (iscn,H2_scn) in enumerate(H2_SCN_ID):
-        print 'Process HTAP2 Models for Scenario {}'.format(H2_scn)
+        print( 'Process HTAP2 Models for Scenario {}'.format(H2_scn))
     
         MODEL_FNAMES_H2    =  glob.glob(MOD_FILE_PATH_H2+H2_scn+'/contributions/*.nc')
         NMODS_H2_SCN = len(MODEL_FNAMES_H2)
-        print 'List of HTAP-2 Models to Process for {} scenario'.format(H2_scn)
-        print MODEL_FNAMES_H2
+        print( 'List of HTAP-2 Models to Process for {} scenario'.format(H2_scn))
+        print( MODEL_FNAMES_H2)
         
         # Initialise new arrays to store the output scaled Ozone responses for each model in
-        print 'Initialise Output arrays to collect data for each HTAP2 Regional Perturbation Scenario'
+        print( 'Initialise Output arrays to collect data for each HTAP2 Regional Perturbation Scenario')
         # Individual regional contribution response fields
         srf_o3_data_reg_H2          = np.zeros((NMODS_H2_SCN,NYRS,ntime,nlats,nlons), dtype='f') # individual regional contributions from all species and for CH4 separately
         o3_3d_data_all_reg_H2       = np.zeros((NMODS_H2_SCN,NYRS,ntime,nlevs,nlats,nlons), dtype='f')
@@ -713,13 +716,13 @@ if __name__ == '__main__':
             cur_mod_short_txt = cur_mod_2.split('_')
             cur_mod_2_short = '_'.join(cur_mod_short_txt[0:1])
             add_scn = '_'.join(cur_mod_short_txt[1:2])
-            print 'Calculate {} Response to emission scenario {} from HTAP-2 model {} for {}'.format(SPEC,EMIS_SCN,cur_mod_2_short,add_scn)
+            print( 'Calculate {} Response to emission scenario {} from HTAP-2 model {} for {}'.format(SPEC,EMIS_SCN,cur_mod_2_short,add_scn))
             
             ################################
             
             # YEARS - Calculate changes for each future year of scenario
             for (iyr,year) in enumerate(YEARS_SCN):
-                print 'Calculate Emission changes for {}'.format(year)
+                print( 'Calculate Emission changes for {}'.format(year))
                 
                 # Take each point individually from the ozone change of each scenario 
                 # (base - 20% reduction for each species and region) and then apply relevant scaling factor 
@@ -730,11 +733,11 @@ if __name__ == '__main__':
                 
                 # For Methane Scenario
                 if (H2_scn == 'CH4ALL'):
-                    print iyr,iscn
+                    print( iyr,iscn)
                     # CH4 has no contributions from CO, NOX and VOCs so just process scaling of data once
                     run_2 = 'ch4_resp'
-                    print 'Processing scenario {}'.format(H2_scn)
-                    print 'Read in HTAP-2 Model data for scenario {} and {}'.format(H2_scn,'ch4_resp')
+                    print( 'Processing scenario {}'.format(H2_scn))
+                    print( 'Read in HTAP-2 Model data for scenario {} and {}'.format(H2_scn,'ch4_resp'))
                     # read in HTAP2 scenario data
                     lats,lons,levs,time,srf_o3_data_H2,o3_3d_data_H2 = ht2_fn.read_H2_model_data(mod_file_2,'ch4_resp','srf','3d',SPEC)
                         
@@ -745,11 +748,11 @@ if __name__ == '__main__':
                     
                     # Test if 3D array is a numpy array as should be a masked array (EMEP model 3D files are numpy arrays)
                     if isinstance(o3_3d_data_H2, (np.ndarray)):
-                        print '3D array is only a numpy array so create a masked array'
+                        print( '3D array is only a numpy array so create a masked array')
                         mask_arr = np.isnan(o3_3d_data_H2) # create mask of boolean values for where points are NaN
                         o3_3d_data_H2 = ma.masked_array(o3_3d_data_H2,mask=mask_arr)
                         
-                    print 'Apply future emission Scaling factor to individual model HTAP-I O3 response for scenario {}'.format(H2_scn)
+                    print( 'Apply future emission Scaling factor to individual model HTAP-I O3 response for scenario {}'.format(H2_scn))
                     # Scaling factors for methane are all in iyr,0,0 point of array (CH4 inc. as source region)        
                     srf_o3_data_sing_reg_H2,o3_3d_data_sing_reg_H2 = ht2_fn.calc_scal_data_H2(emis_scal_f_h2[iyr,0,iscn],emis_scal_g_h2[iyr,0,iscn],run_2,
                                                                                               srf_o3_data_H2,o3_3d_data_H2,ntime,nlevs,nlats,nlons)
@@ -762,26 +765,26 @@ if __name__ == '__main__':
                 else:
                     #loop through each precursor emission for current scenario of ozone changes (base - 20% reduction)
                     for (irun_2,run_2) in enumerate(H2_RUNID): 
-                        print iyr,irun_2,iscn
-                        print 'Processing scenario {}'.format(H2_scn)
+                        print( iyr,irun_2,iscn)
+                        print( 'Processing scenario {}'.format(H2_scn))
                         # Load in surface and 3D Ozone reponse field for each scenario and for each model in order  
-                        print 'Read in HTAP-2 Model data for scenario {} and {}'.format(H2_scn,run_2)
+                        print( 'Read in HTAP-2 Model data for scenario {} and {}'.format(H2_scn,run_2))
                         lats,lons,levs,time,srf_o3_data_H2,o3_3d_data_H2 = ht2_fn.read_H2_model_data(mod_file_2,run_2,'srf','3d',SPEC)
                         
                         # Test if surface ozone field is numpy array or masked array (i.e. missing values)
                         if isinstance(srf_o3_data_H2, (np.ma.core.MaskedArray)):
-                            print 'Surface array is masked so change to numpy'
+                            print( 'Surface array is masked so change to numpy')
                             srf_o3_data_H2 = srf_o3_data_H2.filled() # copy of masked array and makes numpy array with masked values filled with -999.0
                             no_rw = 1 # If surface is masked array then has missing values and need to use rest of the world to fill in
                         
                         # Test if 3D array is a numpy array as should be a masked array (EMEP model 3D files are numpy arrays)
                         if isinstance(o3_3d_data_H2, (np.ndarray)):
-                            print '3D array is only a numpy array so create a masked array'
+                            print( '3D array is only a numpy array so create a masked array')
                             mask_arr = np.isnan(o3_3d_data_H2) # create mask of boolean values for where points are NaN
                             o3_3d_data_H2 = ma.masked_array(o3_3d_data_H2,mask=mask_arr)
                          
-                        print 'Apply future emission Scaling factor to individual model HTAP-I O3 response for scenario {}'.format(run_2)
-                        print emis_scal_f_h2[iyr,irun_2,iscn],emis_scal_g_h2[iyr,irun_2,iscn]
+                        print('Apply future emission Scaling factor to individual model HTAP-I O3 response for scenario {}'.format(run_2))
+                        print( emis_scal_f_h2[iyr,irun_2,iscn],emis_scal_g_h2[iyr,irun_2,iscn])
                         # Emission factors for NOX,VOC,CO all in iyr,:,iscn  
                         srf_o3_data_sing_reg_H2,o3_3d_data_sing_reg_H2 = ht2_fn.calc_scal_data_H2(emis_scal_f_h2[iyr,irun_2,iscn],emis_scal_g_h2[iyr,irun_2,iscn],run_2,
                                                                                                   srf_o3_data_H2,o3_3d_data_H2,ntime,nlevs,nlats,nlons)
@@ -794,7 +797,7 @@ if __name__ == '__main__':
                 
                 #############################################
                 
-                print 'Calculate Annual mean Global Total Column Burden for model {}'.format(cur_mod_short)
+                print( 'Calculate Annual mean Global Total Column Burden for model {}'.format(cur_mod_short))
                 # calculate annual mean Global Total column burden for each model to use to find Variance in HTAP1 for RF error         
                 o3_mod_burd, mod_burd_dob, mod_rf_glob, mod_burd_htap2_regs, mod_rf_htap2_regs = ht_fn.calc_burd_ACCMIP(o3_3d_data_all_reg_H2[imod_2,iyr,:,:,:,:],o3_3d_data_SR1,dp_3d,grid_areas_mon_3d,accmip_2d_rf,NREGS_H2_OUT,HTAP2_RECP_REGS)
                 
@@ -806,7 +809,7 @@ if __name__ == '__main__':
                 ################################    
                 
                 # NEED TO ADD BACK ON BASE 2010 CONCENTRATIONS TO GET NEW OZONE CONCS and not just change in Ozone (Not done above as first run should have scaling factor of zero and is ignored)                   
-                print 'Add year 2010 Parameterised baseline concentrations to get total ozone changes'
+                print( 'Add year 2010 Parameterised baseline concentrations to get total ozone changes')
                 
                 # 3D DATA
                 ### need to change shape of baseline array to fit (mod,yr,time,lat,lon) whereas currently (time,lat,lon,H1_reg)
@@ -831,17 +834,17 @@ if __name__ == '__main__':
                         
                     # Calculate Global mean area for first time
                     if iscn == 0: 
-                        print 'Calculate grid box areas'
+                        print( 'Calculate grid box areas')
                         area2d_global = ht_fn.calc_area_any(nlats,nlons,lats,lons)
                         
                     # CALCULATE GLOBAL MEAN VALUES
-                    print 'Calculate Global Mean Response to current regional perturbation from each model'
+                    print( 'Calculate Global Mean Response to current regional perturbation from each model')
                     global_mean_val_H2_scn[imod_2,iyr]      = ht_fn.calc_glob_mean(srf_o3_data_reg_H2[imod_2,iyr,:,:,:],area2d_global)
                     global_mean_val_act_H2_scn[imod_2,iyr]  = ht_fn.calc_glob_mean(srf_o3_data_reg_tot_H2[imod_2,iyr,:,:,:],area2d_global)
                       
-                    print 'Calculate Annual Mean O3 response values for HTAP2 Models across RELEVANT HTAP2 receptor regions'
+                    print( 'Calculate Annual Mean O3 response values for HTAP2 Models across RELEVANT HTAP2 receptor regions')
                     # Calc reg changes doese calculation to include number of models as well now
-                    print 'Calculate Regional Changes for model {} in {}'.format(cur_mod_2_short,year)
+                    print( 'Calculate Regional Changes for model {} in {}'.format(cur_mod_2_short,year))
                     
                     # O3 response regional mean vlaues
                     reg_mean_vals_yr                    = ht_fn.calc_H2_reg_response(ntime,srf_o3_data_reg_H2[imod_2,iyr,:,:,:],area2d_global,NREGS_H2_OUT,HTAP2_RECP_REGS)
@@ -852,14 +855,14 @@ if __name__ == '__main__':
                     
                     if IPRINT_REG == 1:
                         for ireg_2,values in enumerate(sorted(HTAP2_RECP_REGS)): 
-                            print 'Area weighted annual mean change for HTAP 2 region {} = {:.3f}'.format(values,reg_mean_vals_H2_scn[imod_2,iyr,ireg_2])
-                            print 'Area weighted total annual mean concentration for HTAP 2 region {} = {:.2f}'.format(values,reg_mean_vals_act_H2_scn[imod_2,iyr,ireg_2])
+                            print( 'Area weighted annual mean change for HTAP 2 region {} = {:.3f}'.format(values,reg_mean_vals_H2_scn[imod_2,iyr,ireg_2]))
+                            print( 'Area weighted total annual mean concentration for HTAP 2 region {} = {:.2f}'.format(values,reg_mean_vals_act_H2_scn[imod_2,iyr,ireg_2]))
                 
             #########################################
             
             if IOUT_TXT_INDIVID_H2 ==1:
                 # Write out text file for inidividual model responses to an emission change
-                print 'Write out regional changes to file for HTAP2 model {} in scenario {}'.format(cur_mod_2_short,H2_scn)
+                print( 'Write out regional changes to file for HTAP2 model {} in scenario {}'.format(cur_mod_2_short,H2_scn))
                 header_out          = ['Year','Emis_scn','MCA','CAS','EAS','EUR','MDE','NAF','NAM','NOP','OCN','PAN','RBU','SAF','SAM','SAS','SEA','SOP','GLO']
                 header_out_str      = ','.join(header_out)
                 out_fname_act_conc  = OUT_TXT_FILE_PATH+'individ_mods/'+cur_mod_2_short+'_'+add_scn+'_H2_model_regional_average_'+SPEC+'_concentrations_from_'+H2_scn+'_reg_emis_scenario_for_'+EMIS_SCN+'_on_HTAP_2_receptors.txt'
@@ -867,7 +870,7 @@ if __name__ == '__main__':
                 # Output text file of regional means
                 ht2_fn.output_txt_file_reg_individ_mod_h2(out_fname_resp,header_out_str,YEARS_SCN,H2_scn,reg_mean_vals_H2_scn,global_mean_val_H2_scn,imod_2)
                 ht2_fn.output_txt_file_reg_individ_mod_h2(out_fname_act_conc,header_out_str,YEARS_SCN,H2_scn,reg_mean_vals_act_H2_scn,global_mean_val_act_H2_scn,imod_2)
-                print '#### Finished Writing Regional Response for HTAP2 Individual Model {} for scenario {} ####'.format(cur_mod_2_short,H2_scn)    
+                print( '#### Finished Writing Regional Response for HTAP2 Individual Model {} for scenario {} ####'.format(cur_mod_2_short,H2_scn))
                 
         ############################################
         
@@ -875,14 +878,14 @@ if __name__ == '__main__':
         #### THESE ARE MMM FOR TOTAL O3 RESPONSE TO HTAP2 SOURCE REGION EMISSION CHANGE (H2 MODELS)
         if IOUT_CALC_MMM_H2 == 1:
             #if IOUT_NCF_MMM_H2 == 1:
-            print 'Collate Scaled Ozone response for scenario {} into master array by calculating MMM and S.D.'.format(H2_scn)
+            print( 'Collate Scaled Ozone response for scenario {} into master array by calculating MMM and S.D.'.format(H2_scn))
             o3_3d_reg_all_yrs_MMM_H2[:,:,:,:,:,iscn]    = np.nanmean(o3_3d_data_all_reg_H2, axis=0)
             o3_srf_reg_all_yrs_MMM_H2[:,:,:,:,iscn]     = np.nanmean(srf_o3_data_reg_H2, axis=0)
             o3_3d_reg_tot_all_yrs_MMM_H2[:,:,:,:,:,iscn]= np.nanmean(o3_3d_data_all_reg_tot_H2, axis=0)
             o3_srf_reg_tot_all_yrs_MMM_H2[:,:,:,:,iscn] = np.nanmean(srf_o3_data_reg_tot_H2, axis=0)
             
             if iscn == 0:
-                print 'Separate our Methane Responses for CH4DEC'
+                print( 'Separate our Methane Responses for CH4DEC')
                 ch4_srf_all_yrs_H2          = srf_o3_data_reg_H2[:,:,:,:,:]
                 global_mean_val_H2_ch4      = global_mean_val_H2_scn[:,:]
                 global_mean_val_act_H2_ch4  = global_mean_val_act_H2_scn[:,:]
@@ -904,7 +907,7 @@ if __name__ == '__main__':
             
             # Regional Multi-model Means
             # Calculate multi-model regional mean values along with standard deviation     
-            print 'Calculate Regional HTAP2 Multi-model regional changes (and standard deviations)'
+            print( 'Calculate Regional HTAP2 Multi-model regional changes (and standard deviations)')
             #(NYRS,NREGS_H2,NREGS_H2_OUT)
             
             reg_mean_vals_mmm_H2[:,iscn,:]           = np.nanmean(reg_mean_vals_H2_scn, axis = 0)
@@ -917,7 +920,7 @@ if __name__ == '__main__':
             global_mean_val_mmm_stdev_H2[:,iscn]     = np.nanstd(global_mean_val_H2_scn, axis=0, dtype=np.float64)
             global_mean_val_act_mmm_stdev_H2[:,iscn] = np.nanstd(global_mean_val_act_H2_scn, axis=0, dtype=np.float64)
             
-            print 'Calculate Variation in Global total column burdens between models'
+            print( 'Calculate Variation in Global total column burdens between models')
             o3_burd_all_mod_H2_mmm[:,iscn] = np.nanmean(o3_burd_all_mod_H2,axis=0)
             o3_burd_all_mod_H2_sd[:,iscn]  = np.nanstd(o3_burd_all_mod_H2, axis=0)
             o3_burd_all_mod_H2_var[:,iscn] = np.nanvar(o3_burd_all_mod_H2, axis=0)
@@ -939,7 +942,7 @@ if __name__ == '__main__':
     if IOUT_NCF_MMM_H2 == 1:
         # Output multi-model global mean values and standard deviations to a netcdf file 
         out_fname_mmm_h2 = 'Multi_model_mean_H2_plus_stdev_for_{}_response_to_{}_change.nc'.format(SPEC,EMIS_SCN)
-        print 'Output HTAP2 multi-model scaled Ozone fields to Netcdf file {}'.format(out_fname_mmm_h2)
+        print( 'Output HTAP2 multi-model scaled Ozone fields to Netcdf file {}'.format(out_fname_mmm_h2))
         out_fname_path_h2_mmm = OUT_FILE_PATH+out_fname_mmm_h2
         ht2_fn.output_file_h2_mmm(out_fname_path_h2_mmm,'Multi-model',EMIS_SCN,nlevs,nlons,nlats,ntime,NYRS,NREGS_H2,levs,lons,lats,time,H2_SRC_REGIONS,YEARS_SCN,
                                 #o3_3d_all_yrs_mmm,o3_srf_all_yrs_mmm,o3_3d_tot_all_yrs_mmm,o3_srf_tot_all_yrs_mmm,
@@ -951,7 +954,7 @@ if __name__ == '__main__':
             
     if IOUT_TXT_MMM_H2 == 1:
         # Output multi-model regional surface concentration responses at each HTAP2 receptor to each HTAP2 regional emission perturbation scenario            
-        print 'Output regional mean values from HTAP2 multi-model scaled Ozone fields'
+        print( 'Output regional mean values from HTAP2 multi-model scaled Ozone fields')
         header_out              = ['Year','Emis_scn','MCA','CAS','EAS','EUR','MDE','NAF','NAM','NOP','OCN','PAN','RBU','SAF','SAM','SAS','SEA','SOP','GLO']
         header_out_str          = ','.join(header_out)
         out_fname_act_conc_mmm  = OUT_TXT_FILE_PATH+'Multi-model_H2_regional_average_'+SPEC+'_concentrations_for_'+EMIS_SCN+'_on_HTAP_2_receptors.txt'
@@ -979,7 +982,7 @@ if __name__ == '__main__':
         #                                   reg_o3_burd_all_mod_H2_mmm,reg_o3_burd_all_mod_H2_sd,reg_o3_burd_all_mod_H2_var,reg_o3_rf_all_mod_H2_mmm,reg_o3_rf_all_mod_H2_sd,reg_o3_rf_all_mod_H2_var,
         #                                   base_burd,base_rf_glob,o3_burd_all_mod_H2_mmm,o3_burd_all_mod_H2_sd,o3_burd_all_mod_H2_var,rf_glob_all_mod_H2_mmm,rf_glob_all_mod_H2_sd,rf_glob_all_mod_H2_var)
         
-        print 'Write out to file HTAP2 multi-model change in REGIONAL Total O3 column Burden and RE'
+        print( 'Write out to file HTAP2 multi-model change in REGIONAL Total O3 column Burden and RE')
         
         out_fname_reg_o3_burd_mmm    = OUT_TXT_FILE_PATH+'Multi-model_H2_regional_average_RESPONSE_'+SPEC+'_col_burd_for_'+EMIS_SCN+'_on_HTAP2_receptors.txt'
         out_fname_reg_o3_rf_mmm      = OUT_TXT_FILE_PATH+'Multi-model_H2_regional_average_RESPONSE_'+SPEC+'_Radiative_Forcing_for_'+EMIS_SCN+'_on_HTAP2_receptors.txt'
@@ -992,15 +995,15 @@ if __name__ == '__main__':
         ht_fn.output_txt_file_reg_mmm(out_fname_reg_o3_rf_sd_mmm,header_out_str,YEARS_SCN,H2_SRC_REGIONS,reg_o3_rf_all_mod_H2_sd,rf_glob_all_mod_H2_sd)
         
         
-        print '#### Finished Writing Regional Response for HTAP2 Multi Model Mean Values ####'
+        print( '#### Finished Writing Regional Response for HTAP2 Multi Model Mean Values ####')
         
     ################################
     ################################  
     
     # NOW NEED TO RECOMBINE BOTH HTAP1 AND HTAP2 MULTI-MODEL RESULTS TO GET AN OVERALL RESPONSE
-    print '###### COMBINE HTAP1 AND HTAP2 RESULTS TOGETHER #######'
+    print( '###### COMBINE HTAP1 AND HTAP2 RESULTS TOGETHER #######')
     
-    print 'Combine HTAP1 and HTAP2 Methane response together into a H1 and H2 array'
+    print( 'Combine HTAP1 and HTAP2 Methane response together into a H1 and H2 array')
     # Join together H1 and H2 methane response gridded output
     ch4_srf_all_yrs_H1_H2_comb          = np.concatenate((ch4_srf_all_yrs_H1,ch4_srf_all_yrs_H2),axis=0)
     ch4_3d_reg_all_yrs_H1_H2_comb       = np.concatenate((ch4_3d_reg_all_yrs_H1,ch4_3d_reg_all_yrs_H2),axis=0)
@@ -1019,7 +1022,7 @@ if __name__ == '__main__':
     reg_rf_resp_H1_H2_ch4_comb          = np.concatenate((o3_rf_reg_H1_ch4,o3_rf_reg_H2_ch4),axis=0)
     reg_rf_resp_H1_H2_ch4_comb[reg_rf_resp_H1_H2_ch4_comb == 0.0]       = np.nan
     
-    print 'Calculate multi-model mean values to CH4 response for both HTAP1 and HTAP2 models'
+    print( 'Calculate multi-model mean values to CH4 response for both HTAP1 and HTAP2 models')
     # Global gridded arrays
     ch4_srf_all_yrs_H1_H2_comb_mmm              = np.mean(ch4_srf_all_yrs_H1_H2_comb,axis=0)
     ch4_3d_reg_all_yrs_H1_H2_comb_mmm           = np.mean(ch4_3d_reg_all_yrs_H1_H2_comb,axis=0)
@@ -1034,13 +1037,13 @@ if __name__ == '__main__':
     reg_mean_burd_resp_H1_H2_ch4_comb_mmm       = np.nanmean(reg_burd_resp_H1_H2_ch4_comb,axis=0)  
     reg_mean_rf_resp_H1_H2_ch4_comb_mmm         = np.nanmean(reg_rf_resp_H1_H2_ch4_comb,axis=0)
     
-    print 'Global CH4 MMM'      , global_mean_val_H1_H2_ch4_comb_mmm
-    print 'Global Burd CH4 MMM' , global_mean_burd_resp_H1_H2_ch4_comb_mmm
-    print 'Global RF CH4 MMM'   , global_mean_rf_resp_H1_H2_ch4_comb_mmm
+    print( 'Global CH4 MMM'      , global_mean_val_H1_H2_ch4_comb_mmm)
+    print( 'Global Burd CH4 MMM' , global_mean_burd_resp_H1_H2_ch4_comb_mmm)
+    print( 'Global RF CH4 MMM'   , global_mean_rf_resp_H1_H2_ch4_comb_mmm)
     
     ################################  
     
-    print 'Initialise New combined arrays'
+    print( 'Initialise New combined arrays')
     # Initialise new combined arrays for multi-model means
     # Global values
     global_mean_val_mmm_comb_H1_H2_ch4      = np.zeros(NYRS,dtype='f')
@@ -1059,14 +1062,14 @@ if __name__ == '__main__':
     o3_3d_tot_all_yrs_MMM_comb_H1_H2_ch4    = np.zeros((NYRS,ntime,nlevs,nlats,nlons),dtype='f')
     
     # Create output with CH4 removed for both surface and 3D
-    print ' Seprate CH4 response from H1 and H2 fields'
+    print( ' Seprate CH4 response from H1 and H2 fields')
     o3_srf_reg_all_yrs_MMM_H2_no_ch4 = o3_srf_reg_all_yrs_MMM_H2[:,:,:,:,1:] #np.zeros((NYRS,ntime,nlats,nlons),dtype='f')
     o3_3d_reg_all_yrs_MMM_H2_no_ch4  = o3_3d_reg_all_yrs_MMM_H2[:,:,:,:,:,1:] #np.zeros((NYRS,ntime,nlevs,nlats,nlons),dtype='f')
     o3_srf_reg_all_yrs_MMM_H1_no_ch4 = o3_srf_reg_all_yrs_H1_mmm[:,:,:,:,1:]  #np.zeros((NYRS,ntime,nlats,nlons),dtype='f')
     o3_3d_reg_all_yrs_MMM_H1_no_ch4  =  o3_3d_reg_all_yrs_H1_mmm[:,:,:,:,:,1:] #np.zeros((NYRS,ntime,nlevs,nlats,nlons),dtype='f')
     
     # Add combined CH4 fields back onto H1 and H2 fields with no CH4 response
-    print 'Add back together combined Mathane responses to H1 and H2 responses'
+    print( 'Add back together combined Mathane responses to H1 and H2 responses')
     # Sum up O3 response over all source regions to give total response here for H1 src regions + H2 src egions + Ch4 response
     o3_srf_all_yrs_MMM_comb_H1_H2_ch4 = np.sum(o3_srf_reg_all_yrs_MMM_H2_no_ch4, axis=4) + np.sum(o3_srf_reg_all_yrs_MMM_H1_no_ch4, axis=4) + ch4_srf_all_yrs_H1_H2_comb_mmm
     o3_3d_all_yrs_MMM_comb_H1_H2_ch4  = np.sum(o3_3d_reg_all_yrs_MMM_H2_no_ch4, axis=5) + np.sum(o3_3d_reg_all_yrs_MMM_H1_no_ch4, axis=5) + ch4_3d_reg_all_yrs_H1_H2_comb_mmm
@@ -1075,19 +1078,19 @@ if __name__ == '__main__':
     
     # for Total O3 to be used in burden and RF calculations combine back together for each year
     for (iyr,yr) in enumerate(YEARS_SCN):
-        print 'Combine HTAP1 and HTAP2 results for year {}'.format(yr)
+        print( 'Combine HTAP1 and HTAP2 results for year {}'.format(yr))
         # Careful Check not double counting CH4 contribution
         # Total up Global response values to all source region emission perturbations (for H1 and H2) and add methane contributions back on
         global_mean_val_mmm_comb_H1_H2_ch4[iyr] = np.sum(global_mean_val_mmm_H2[iyr,1:]) + np.sum(global_mean_val_mmm_H1[iyr,1:]) + global_mean_val_H1_H2_ch4_comb_mmm[iyr]
                 
         # Check if this way giving the same answer as calculating directly
-        print 'H2 ',np.sum(global_mean_val_mmm_H2[iyr,1:])
-        print 'H1 ',np.sum(global_mean_val_mmm_H1[iyr,1:])
-        print 'CH4 ',global_mean_val_H1_H2_ch4_comb_mmm[iyr]
-        print 'Total ',global_mean_val_mmm_comb_H1_H2_ch4[iyr]
-        print 'Global direct ',ht_fn.calc_glob_mean(o3_srf_all_yrs_MMM_comb_H1_H2_ch4[iyr,:,:,:],area2d_global)
+        print( 'H2 ',np.sum(global_mean_val_mmm_H2[iyr,1:]))
+        print( 'H1 ',np.sum(global_mean_val_mmm_H1[iyr,1:]))
+        print( 'CH4 ',global_mean_val_H1_H2_ch4_comb_mmm[iyr])
+        print( 'Total ',global_mean_val_mmm_comb_H1_H2_ch4[iyr])
+        print( 'Global direct ',ht_fn.calc_glob_mean(o3_srf_all_yrs_MMM_comb_H1_H2_ch4[iyr,:,:,:],area2d_global))
         
-        print 'Add baseline back onto for total O3 response'
+        print( 'Add baseline back onto for total O3 response')
         o3_srf_tot_all_yrs_MMM_comb_H1_H2_ch4[iyr,:,:,:]  = o3_srf_all_yrs_MMM_comb_H1_H2_ch4[iyr,:,:,:] + srf_o3_data_SR1[:,:,:]
         o3_3d_tot_all_yrs_MMM_comb_H1_H2_ch4[iyr,:,:,:,:] = o3_3d_all_yrs_MMM_comb_H1_H2_ch4[iyr,:,:,:,:] + o3_3d_data_SR1.filled(float('nan'))
         
@@ -1095,12 +1098,12 @@ if __name__ == '__main__':
         o3_burd_all_mod_mmm_comb_H1_H2_ch4[iyr] = np.sum(o3_burd_all_mod_H2_mmm[iyr,1:]) + np.sum(o3_burd_all_mod_H1_mmm[iyr,1:]) + global_mean_burd_resp_H1_H2_ch4_comb_mmm[iyr]
         rf_glob_all_mod_mmm_comb_H1_H2_ch4[iyr] = np.sum(rf_glob_all_mod_H2_mmm[iyr,1:]) + np.sum(rf_glob_all_mod_H1_mmm[iyr,1:]) + global_mean_rf_resp_H1_H2_ch4_comb_mmm[iyr]
         
-        print 'GLOB O3 burd RESP'   , o3_burd_all_mod_mmm_comb_H1_H2_ch4[iyr]
-        print 'GLOB O3 RF RESP'     , rf_glob_all_mod_mmm_comb_H1_H2_ch4[iyr]
+        print( 'GLOB O3 burd RESP'   , o3_burd_all_mod_mmm_comb_H1_H2_ch4[iyr])
+        print( 'GLOB O3 RF RESP'     , rf_glob_all_mod_mmm_comb_H1_H2_ch4[iyr])
         
         # For each year of scenario now combine results together for each HTAP2 receptor region
         for (ireg_h2,reg_h2) in enumerate(sorted(HTAP2_RECP_REGS)):
-            print 'Combine HTAP1 and HTAP2 results for HTAP2 Receptor Region {}'.format(reg_h2)
+            print( 'Combine HTAP1 and HTAP2 results for HTAP2 Receptor Region {}'.format(reg_h2))
             # can only combine O3 responses like this
             # Total up regional response values to all source region emission perturbations (for H1 and H2) and add methane contributions back on
             
@@ -1132,7 +1135,7 @@ if __name__ == '__main__':
         reg_mean_vals_act_mmm_comb_H1_H2_ch4[iyr,:] = ht_fn.calc_H2_reg_response(ntime,o3_srf_tot_all_yrs_MMM_comb_H1_H2_ch4[iyr,:,:,:],area2d_global,NREGS_H2_OUT,HTAP2_RECP_REGS)
         global_mean_val_act_mmm_comb_H1_H2_ch4[iyr] = ht_fn.calc_glob_mean(o3_srf_tot_all_yrs_MMM_comb_H1_H2_ch4[iyr,:,:,:],area2d_global)
     
-    print 'Calculate Total Burdens and RF by adding baseline values back on'
+    print( 'Calculate Total Burdens and RF by adding baseline values back on')
     # Calculate total burden now (response + base)
     o3_burd_tot_all_mod_mmm_comb_H1_H2_ch4      = o3_burd_all_mod_mmm_comb_H1_H2_ch4 + base_burd
     rf_glob_tot_all_mod_mmm_comb_H1_H2_ch4      = rf_glob_all_mod_mmm_comb_H1_H2_ch4 + base_rf_glob
@@ -1146,14 +1149,14 @@ if __name__ == '__main__':
     #print 'Output Combined total multi-model mean O3 response Fields to a netcdf file'
     #out_fname_mmm_comb_H1_ch4 = 'Multi_model_mean_{}_response_from_H1_H2_models_to_{}_change_H1_CH4_used.nc'.format(SPEC,EMIS_SCN)
     if IOUT_NCF_MMM_COMB == 1:
-        print 'Output HTAP1 and HTAP2 combined multi-model scaled Ozone fields to Netcdf files'
+        print( 'Output HTAP1 and HTAP2 combined multi-model scaled Ozone fields to Netcdf files')
         out_fname_mmm_comb_H1_H2_ch4 = 'Multi_model_mean_{}_response_from_H1_H2_models_to_{}_change_H1_H2_comb_CH4_used.nc'.format(SPEC,EMIS_SCN)
         out_fname_path_h2_mmm        = OUT_FILE_PATH+out_fname_mmm_comb_H1_H2_ch4
         ht_fn.output_file_mod_H1_H2(out_fname_path_h2_mmm,'Combined_H1_H2_CH4',EMIS_SCN,nlevs,nlons,nlats,ntime,NYRS,levs,lons,lats,time,YEARS_SCN,
                                     o3_3d_all_yrs_MMM_comb_H1_H2_ch4,o3_srf_all_yrs_MMM_comb_H1_H2_ch4,o3_3d_tot_all_yrs_MMM_comb_H1_H2_ch4,o3_srf_tot_all_yrs_MMM_comb_H1_H2_ch4)
     
     # Output multi-model regional concentration responses at each HTAP2 receptor to each HTAP2 regional emission perturbation scenario            
-    print 'Output regional multi-model mean values from combined HTAP1 and HTAP2 multi-model scaled Ozone fields'
+    print( 'Output regional multi-model mean values from combined HTAP1 and HTAP2 multi-model scaled Ozone fields')
     header_out                                  = ['Year','MCA','CAS','EAS','EUR','MDE','NAF','NAM','NOP','OCN','PAN','RBU','SAF','SAM','SAS','SEA','SOP','GLO']
     header_out_str                              = ','.join(header_out)
     out_fname_resp_mmm_comb_H1_H2_ch4_comb      = OUT_TXT_FILE_PATH+'Multi-model_H1_H2_comb_regional_average_RESPONSE_in_'+SPEC+'_concentrations_for_'+EMIS_SCN+'_on_HTAP_2_receptors_H1_H2_CH4_comb.txt'
@@ -1172,7 +1175,7 @@ if __name__ == '__main__':
     #out_fname_burd_mmm_comb_H1_H2_ch4_comb = OUT_TXT_FILE_PATH+'Multi-model_H1_H2_comb_Global_Total_column_'+SPEC+'_burden_and_Radiative_forc_for_'+EMIS_SCN+'_H1_H2_CH4_comb.txt'
     #ht_fn.output_txt_file_burd_mmm_comb(out_fname_burd_mmm_comb_H1_H2_ch4_comb,header_out_str,['2010']+YEARS_SCN,base_burd,base_rf_glob,o3_burd_all_mod_mmm_comb_H1_H2_ch4,rf_glob_all_mod_mmm_comb_H1_H2_ch4,o3_burd_diff_all_mod_mmm_comb_H1_H2_ch4,rf_glob_diff_all_mod_mmm_comb_H1_H2_ch4)
     
-    print 'Output Global and HTAP2 Regional Total Column Burden and Radiative Forcing RESPONSE values from combined HTAP1 and HTAP2 multi-model scaled Ozone fields'
+    print( 'Output Global and HTAP2 Regional Total Column Burden and Radiative Forcing RESPONSE values from combined HTAP1 and HTAP2 multi-model scaled Ozone fields')
     header_reg_out                          = ['Year','MCA','CAS','EAS','EUR','MDE','NAF','NAM','NOP','OCN','PAN','RBU','SAF','SAM','SAS','SEA','SOP','GLO']
     header_reg_out_str                      = ','.join(header_reg_out)
     # output burden and RF RESPONSE
@@ -1182,20 +1185,20 @@ if __name__ == '__main__':
     ht_fn.output_txt_file_reg_mmm_comb(out_fname_rf_mmm_comb_H1_H2_ch4_comb,header_reg_out_str,YEARS_SCN,rf_reg_all_mod_mmm_comb_H1_H2_ch4,rf_glob_all_mod_mmm_comb_H1_H2_ch4)
     
     # Output TOTAL Burden and TOTAL RF response
-    print 'Output Global and HTAP2 Regional Total Column Burden and Radiative Forcing TOTAL values from combined HTAP1 and HTAP2 multi-model scaled Ozone fields'
+    print( 'Output Global and HTAP2 Regional Total Column Burden and Radiative Forcing TOTAL values from combined HTAP1 and HTAP2 multi-model scaled Ozone fields')
     out_fname_burd_mmm_comb_H1_H2_ch4_comb  = OUT_TXT_FILE_PATH+'Multi-model_H1_H2_comb_reg_mean_TOTAL_'+SPEC+'_burden_for_'+EMIS_SCN+'_on_H2_receptors_H1_H2_CH4_comb.txt'
     ht_fn.output_txt_file_reg_mmm_comb(out_fname_burd_mmm_comb_H1_H2_ch4_comb,header_reg_out_str,YEARS_SCN,o3_burd_tot_reg_all_mod_mmm_comb_H1_H2_ch4,o3_burd_tot_all_mod_mmm_comb_H1_H2_ch4)
     out_fname_rf_mmm_comb_H1_H2_ch4_comb    = OUT_TXT_FILE_PATH+'Multi-model_H1_H2_comb_reg_mean_TOTAL_'+SPEC+'_Radiative_Forcing_for_'+EMIS_SCN+'_on_H2_receptors_H1_H2_CH4_comb.txt'
     ht_fn.output_txt_file_reg_mmm_comb(out_fname_rf_mmm_comb_H1_H2_ch4_comb,header_reg_out_str,YEARS_SCN,rf_reg_tot_all_mod_mmm_comb_H1_H2_ch4,rf_glob_tot_all_mod_mmm_comb_H1_H2_ch4)
                                        
-    print '#### Finished Writing Regional Response for HTAP2 Multi Model Mean Values ####'
+    print( '#### Finished Writing Regional Response for HTAP2 Multi Model Mean Values ####')
     
     ################################ 
     
     ## PLOT UP regional response values
     # Plot out Multi-model mean O3 responses over different years for EUR, NAM, SAS, EAS, GLOBAL
     if IPLOT_REG_MMM_COMB == 1:
-        print 'Plot up Regional HTAP1 Multi-model mean responses to Emission change across years'
+        print( 'Plot up Regional HTAP1 Multi-model mean responses to Emission change across years')
         out_plot_fname = PLOT_DIR+'Regional_Multi-model_mean_H2_{}_response_between_{}_to_{}_for_{}_emis_change.png'.format(SPEC,YEARS_SCN[0],YEARS_SCN[-1],EMIS_SCN)
         #if CALC_REG_HTAP1 == 1: plot_reg_changes_mods(pert_wght_1,imod,cur_mod,iyr,year,out_plot_fname)
                     
@@ -1204,6 +1207,6 @@ if __name__ == '__main__':
         years_plot = ['2010'] + YEARS_SCN
         ht_fn.plot_reg_changes_all_years_comb(out_plot_fname,years_plot,reg_mean_vals_mmm_2_plot,HTAP2_RECP_REGS) # (NYRS,NREGS)
     
-    print '###### !!! FIN !!! #######'
+    print( '###### !!! FIN !!! #######')
         
     ################################ 

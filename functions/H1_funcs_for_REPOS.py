@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 
 '''
 
@@ -44,7 +44,7 @@ def calc_scal_data(lin_scal_f,non_lin_scal_g,scenario,region_num,model,rw_flag,d
     
     if lin_scal_f != 0.0: #only apply if scaling factor not equal to zero (i.e. not SR1 or SR6 scenarios)
         if scenario != 'SR3': # if species is not NOX or linear scaling factor only required (i.e. not Nox or CH4)
-            print 'Adjust Response using LINEAR scaling factor of {:.3f}'.format(lin_scal_f)
+            print( 'Adjust Response using LINEAR scaling factor of {:.3f}'.format(lin_scal_f))
             
             # Scale regional response fields where there is valid data (i.e. not -999.0)
             # Surface fields
@@ -53,15 +53,15 @@ def calc_scal_data(lin_scal_f,non_lin_scal_g,scenario,region_num,model,rw_flag,d
             data_3d_sing_reg = (data_3d.filled(0) * lin_scal_f)
         
         else: # NOx Case
-            print 'For NOX emissions use Non-linear Emission Scaling factor g of {:.3f}'.format(non_lin_scal_g)
+            print( 'For NOX emissions use Non-linear Emission Scaling factor g of {:.3f}'.format(non_lin_scal_g))
             
             # To capture specific cases for Titration effects specify different scaling factor 
             if lin_scal_f < 0: # NOx increases relative to a original 20% reduction so why scaling factor below 0
                 nox_scal_fact = lin_scal_f # Use linear scaling for emission increases and ozone increases
-                print 'For NOX increases use Linear NOX scaling factor for Titration Regime of {:3f}'.format(lin_scal_f)
+                print( 'For NOX increases use Linear NOX scaling factor for Titration Regime of {:3f}'.format(lin_scal_f))
             else:
                 nox_scal_fact = ((2.0 * lin_scal_f) - non_lin_scal_g) # Reduced scaling factor for where NOx emission decreases relative to 20% and ozone increases occur 
-                print 'For NOX decreases use Adjusted NON-Linear NOX scaling factor for Titration regime of {:.3f}'.format(nox_scal_fact)
+                print( 'For NOX decreases use Adjusted NON-Linear NOX scaling factor for Titration regime of {:.3f}'.format(nox_scal_fact))
             
             # Apply scaling factor to Surface fields (all numpy arrays)            
             # For O3 decrease with NOX decrease
@@ -76,7 +76,7 @@ def calc_scal_data(lin_scal_f,non_lin_scal_g,scenario,region_num,model,rw_flag,d
             data_3d_sing_reg[data_3d >= 0.0] = (data_3d[data_3d >= 0.0].filled(0) * nox_scal_fact)
             
     else: 
-        print 'Modelled fields are not scaled as linear scaling factor is Zero'
+        print( 'Modelled fields are not scaled as linear scaling factor is Zero')
     
     return data_surf_sing_reg,data_3d_sing_reg
 
@@ -138,7 +138,7 @@ def output_file_mod_H1(out_fname,mod_name,emis_scn,nlevs,nlons,nlats,ntime,nregs
     
     #close the file and write information
     ncdat_out.close()
-    print 'Written scaled emission files to netcdf file {}'.format(out_fname)
+    print( 'Written scaled emission files to netcdf file {}'.format(out_fname))
     
 #---------------------------------------------------
 
@@ -219,6 +219,6 @@ def output_file_h1_mmm(out_fname,mod_name,emis_scn,nlevs,nlons,nlats,ntime,nyrs,
     
     #close the file and write information
     ncdat_out.close()
-    print 'Written scaled emission files to netcdf file {}'.format(out_fname)
+    print( 'Written scaled emission files to netcdf file {}'.format(out_fname))
 
 #----------------------------------------------------------------------------
