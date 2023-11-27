@@ -67,6 +67,10 @@ Included if statements to correct combined response output files to account for 
 ### UPDATE November 2021 ###
 Modified to work with Python 3
 
+### UPDATE November 2023 ###
+Repository on Github https://github.com/MetOffice/TORAM_HTAP_O3_model/
+All future commits and changes will now be made and documented here
+
 '''
 
 # Python Modules to import
@@ -177,6 +181,7 @@ CALC_REG_HTAP2_H1   = 1 # perform calculation of regional concentrations from HT
 CALC_REG_HTAP2_H2   = 1 # perform calculation of regional concentrations from HTAP2 models
 IPRINT_REG          = 0 # print out regional responses for individual models to Screen
 IOUT_NCF_MMM_COMB   = 0 # to output gridded values of the multi-model response from COMBINED HTAP-1 and HTAP-2 models to a netcdf file
+IOUT_NCF_MMM_COMB_SURF = False # set this flag to only output the surface Ozone fields to save on space for long runs
 IPLOT_REG_MMM_COMB  = 0 # Plot up total O3 response values across all HTAP2 receptors
 
 #-----------------------------------------------
@@ -1150,9 +1155,17 @@ if __name__ == '__main__':
     #out_fname_mmm_comb_H1_ch4 = 'Multi_model_mean_{}_response_from_H1_H2_models_to_{}_change_H1_CH4_used.nc'.format(SPEC,EMIS_SCN)
     if IOUT_NCF_MMM_COMB == 1:
         print( 'Output HTAP1 and HTAP2 combined multi-model scaled Ozone fields to Netcdf files')
-        out_fname_mmm_comb_H1_H2_ch4 = 'Multi_model_mean_{}_response_from_H1_H2_models_to_{}_change_H1_H2_comb_CH4_used.nc'.format(SPEC,EMIS_SCN)
-        out_fname_path_h2_mmm        = OUT_FILE_PATH+out_fname_mmm_comb_H1_H2_ch4
-        ht_fn.output_file_mod_H1_H2(out_fname_path_h2_mmm,'Combined_H1_H2_CH4',EMIS_SCN,nlevs,nlons,nlats,ntime,NYRS,levs,lons,lats,time,YEARS_SCN,
+        if IOUT_NCF_MMM_COMB_SURF:
+            print('Output only Surface ozone fields')
+            out_fname_mmm_comb_H1_H2_ch4 = 'Multi_model_mean_{}_response_from_H1_H2_models_to_{}_change_H1_H2_comb_CH4_used_surf_only.nc'.format(SPEC,EMIS_SCN)
+            out_fname_path_h2_mmm        = OUT_FILE_PATH+out_fname_mmm_comb_H1_H2_ch4
+            ht_fn.output_file_surf_mod_H1_H2(out_fname_path_h2_mmm,'Combined_H1_H2_CH4',EMIS_SCN,nlevs,nlons,nlats,ntime,NYRS,levs,lons,lats,time,YEARS_SCN,
+                                             o3_srf_all_yrs_MMM_comb_H1_H2_ch4,o3_srf_tot_all_yrs_MMM_comb_H1_H2_ch4)
+        else:
+            print('Output full 3D ozone fields')
+            out_fname_mmm_comb_H1_H2_ch4 = 'Multi_model_mean_{}_response_from_H1_H2_models_to_{}_change_H1_H2_comb_CH4_used.nc'.format(SPEC,EMIS_SCN)
+            out_fname_path_h2_mmm        = OUT_FILE_PATH+out_fname_mmm_comb_H1_H2_ch4
+            ht_fn.output_file_mod_H1_H2(out_fname_path_h2_mmm,'Combined_H1_H2_CH4',EMIS_SCN,nlevs,nlons,nlats,ntime,NYRS,levs,lons,lats,time,YEARS_SCN,
                                     o3_3d_all_yrs_MMM_comb_H1_H2_ch4,o3_srf_all_yrs_MMM_comb_H1_H2_ch4,o3_3d_tot_all_yrs_MMM_comb_H1_H2_ch4,o3_srf_tot_all_yrs_MMM_comb_H1_H2_ch4)
     
     # Output multi-model regional concentration responses at each HTAP2 receptor to each HTAP2 regional emission perturbation scenario            
